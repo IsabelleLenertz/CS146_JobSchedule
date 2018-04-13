@@ -42,8 +42,9 @@ public class JobSchedule {
 		/**
 		 * Return the earliest possible starting time for a job
 		 * @return
+		 * @throws Exception if there is a cycle or if the job cannot be reached
 		 */
-		public int getStartTime() {
+		public int getStartTime() throws Exception {
 			// Initialize the list for DFS
 			schedule.initializeDFS();
 			
@@ -51,11 +52,42 @@ public class JobSchedule {
 			ArrayList<Job> rTopo = schedule.getReverseTopo();
 			
 			// Run DAGSSS until the job status is true (finished == true)
-			//DAG SSSP 6:59
+			for (Job u : rTopo) {
+				u.finished = true;
+				if (u == this) { return this.d;}
+				for (Job v : u.outgoingList) {
+					if(u.d + u.time > v.d || v.d == Integer.MAX_VALUE) {
+						if (this.isFinished()) {
+							return -1;
+						}
+						v.d = u.d + u.time;
+						v.parent = u;
+					}
+				}
+			}
 			
-			// Return job.d
-			return -1;
+			if(this.d == Integer.MAX_VALUE) {
+				return -1;
+			}
+			
+			// Return job.d (distance, ie time, needed to reach the job)
+			return this.d;
 		}
+		
+		/**
+		 * Relax edge u->v, where this is v
+		 * @param u incoming job, u.time is the weight of the edge
+		 * @throws Exception 
+		 */
+		/**private void relax(Job u) throws Exception {
+			if(u.d + u.time > this.d || this.d == Integer.MAX_VALUE) {
+				if (this.isFinished()) {
+					throw new Exception("No solution");
+				}
+				this.d = u.d + u.time;
+				this.parent = u;
+			}
+		}/*
 		
 		/**
 		 * Get the list of incoming adjencency (ie, prerequisists)
@@ -81,21 +113,15 @@ public class JobSchedule {
 		}
 		
 		
-		protected void isNotDone() {
-			finished = false;
-		}
-		
-		protected void isDone() {
-			finished = true;
-		}
-		
-		protected boolean status() {
+		protected boolean isFinished() {
 			return finished;
 		}
 		
-		protected void setDiscovered(boolean d) {
-			discovered = d;
-		}
+	}
+	
+	
+	public JobSchedule() {
+		list = new ArrayList<Job>();
 	}
 	
 	/**
@@ -103,6 +129,11 @@ public class JobSchedule {
 	 */
 	private void initializeDFS() {
 		for(Job element : list) {
+			if (element.incomingList.isEmpty()) {
+				element.d = 0;
+			} else {
+				element.d = Integer.MAX_VALUE;
+			}
 			element.finished = false;
 			element.discovered = false;
 		}
