@@ -53,8 +53,20 @@ public class JobSchedule {
 			
 			// Run DAGSSS until the job status is true (finished == true)
 			for (Job u : rTopo) {
-				u.finished = true;
-				if (u == this) { return this.d;}
+				// Check if all the incoming jobs are done
+				boolean incomingDone = true;
+				int i = 0;
+				while (i < u.incomingList.size() && incomingDone) {
+					incomingDone = u.incomingList.get(i).finished;
+					i++;
+				}
+				if (incomingDone) {
+					u.finished = true;
+				} else {
+					return -1;
+				}
+				
+				// Look at all the outgoing list to update them
 				for (Job v : u.outgoingList) {
 					if(u.d + u.time > v.d || v.d == Integer.MAX_VALUE) {
 						if (this.isFinished()) {
