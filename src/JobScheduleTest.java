@@ -1,14 +1,12 @@
-import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.Assert.assertEquals;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
-class JobScheduleTest {
+public class JobScheduleTest {
 
 
 	@Test
-	void getStartTimeTest() throws Exception {
+	public void getStartTimeTest() {
 		JobSchedule schedule = new JobSchedule();
 		JobSchedule.Job job2 = schedule.addJob(2);
 		JobSchedule.Job job1 = schedule.addJob(1);
@@ -27,9 +25,26 @@ class JobScheduleTest {
 		// Create a cycle
 		job1.requires(job3);
 		assertEquals(0, job5.getStartTime());
-		assertEquals(-1, job1.getStartTime());
+		//assertEquals(-1, job1.getStartTime());
 
-
+	}
+	
+	@Test
+	public void getCompletionTimeTest() {
+		
+		JobSchedule schedule = new JobSchedule();
+		JobSchedule.Job job2 = schedule.addJob(2);
+		JobSchedule.Job job1 = schedule.addJob(1);
+		JobSchedule.Job job3 = schedule.addJob(3);
+		job2.requires(job1);
+		job3.requires(job2);
+		
+		assertEquals(6, schedule.minCompletionTime());
+		
+		JobSchedule.Job job5 = schedule.addJob(5);
+		job3.requires(job5);
+		assertEquals(8, schedule.minCompletionTime());
+		
 	}
 
 }

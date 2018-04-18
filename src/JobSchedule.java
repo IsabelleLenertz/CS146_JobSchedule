@@ -44,7 +44,7 @@ public class JobSchedule {
 		 * @return
 		 * @throws Exception if there is a cycle or if the job cannot be reached
 		 */
-		public int getStartTime() throws Exception {
+		public int getStartTime() {
 			// Initialize the list for DFS
 			schedule.initializeDFS();
 			
@@ -53,6 +53,7 @@ public class JobSchedule {
 			
 			// Run DAGSSS until the job status is true (finished == true)
 			for (Job u : rTopo) {
+				/**
 				// Check if all the incoming jobs are done
 				boolean incomingDone = true;
 				int i = 0;
@@ -65,13 +66,14 @@ public class JobSchedule {
 				} else {
 					return -1;
 				}
-				
+				*/
+				u.finished = true;
 				// Look at all the outgoing list to update them
 				for (Job v : u.outgoingList) {
 					if(u.d + u.time > v.d || v.d == Integer.MAX_VALUE) {
-						if (this.isFinished()) {
-							return -1;
-						}
+						//if (this.isFinished()) {
+						//	return -1;
+						//}
 						v.d = u.d + u.time;
 						v.parent = u;
 					}
@@ -191,7 +193,30 @@ public class JobSchedule {
 	 * @return the minimum completion time, or -1 is the schedule is impossible.
 	 */
 	public int minCompletionTime() {
-		return -1;
+		int maxStartingTime = 0;
+		Job lastJob = null;
+		
+		// Initialize the list for DFS
+		this.initializeDFS();
+		
+		// Get topological order of the list
+		ArrayList<Job> rTopo = this.getReverseTopo();
+		// Run DAGSSS until the job status is true (finished == true)
+			for (Job u : rTopo) {
+				u.finished = true;
+				// Look at all the outgoing list to update them
+				for (Job v : u.outgoingList) {
+					if(u.d + u.time > v.d || v.d == Integer.MAX_VALUE) {
+						v.d = u.d + u.time;
+						v.parent = u;
+						if (v.d > maxStartingTime) {
+							maxStartingTime = v.d;
+							lastJob = v;
+						}
+					}
+				}
+			}
+		return maxStartingTime + lastJob.time;
 	}
 	
 
