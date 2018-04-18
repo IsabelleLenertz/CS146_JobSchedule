@@ -2,18 +2,14 @@ import java.util.ArrayList;
 
 public class JobSchedule {
 	private ArrayList<Job> list;
-	//private ArrayList<ArrayList<Job>> incomingList;
+	private ArrayList<Job> rTopo;
 	
 	public class Job{
 		private int time;
 		private ArrayList<Job> incomingList;
-		private ArrayList<Job> outgoingList;
 		private int d;
-		private Job parent;
-		private boolean finished;
 		private JobSchedule schedule;
-		private boolean discovered;
-		
+		private boolean discovered;	
 
 		
 		/**
@@ -22,7 +18,6 @@ public class JobSchedule {
 		 */
 		protected Job(int t, JobSchedule thisSchedule) {
 			incomingList = new ArrayList<Job>();
-			outgoingList = new ArrayList<Job>();
 			time = t;
 			schedule = thisSchedule;
 		}
@@ -34,9 +29,8 @@ public class JobSchedule {
 		public void requires(Job j) {
 			// Add j to the incoming list of this
 			incomingList.add(j);
+			schedule.rTopo = schedule.getReverseTopo();
 			
-			// Add this to the outgoing list of j
-			j.outgoingList.add(this);
 		}
 		
 		/**
@@ -47,45 +41,22 @@ public class JobSchedule {
 		public int getStartTime() {
 			// Initialize the list for DFS
 			schedule.initializeDFS();
-			
-			// Get topological order of the list
-			ArrayList<Job> rTopo = schedule.getReverseTopo();
-			
+						
 			// Run DAGSSS until the job status is true (finished == true)
-			for (Job u : rTopo) {
-				/**
-				// Check if all the incoming jobs are done
-				boolean incomingDone = true;
-				int i = 0;
-				while (i < u.incomingList.size() && incomingDone) {
-					incomingDone = u.incomingList.get(i).finished;
-					i++;
-				}
-				if (incomingDone) {
-					u.finished = true;
-				} else {
-					return -1;
-				}
-				*/
-				u.finished = true;
-				// Look at all the outgoing list to update them
-				for (Job v : u.outgoingList) {
-					if(u.d + u.time > v.d || v.d == Integer.MAX_VALUE) {
-						//if (this.isFinished()) {
-						//	return -1;
-						//}
-						v.d = u.d + u.time;
-						v.parent = u;
+			int i = 0;
+			Job u = null;
+			while (u != this && i < schedule.rTopo.size()) {
+				u = schedule.rTopo.get(i);
+				for (Job v : u.incomingList) {
+					if (v.d == -1) {
+						return -1;
 					}
+					u.d = Integer.max(u.d, v.d+v.time);
 				}
+				i++;
 			}
-			
-			if(this.d == Integer.MAX_VALUE) {
-				return -1;
-			}
-			
-			// Return job.d (distance, ie time, needed to reach the job)
 			return this.d;
+			
 		}
 		
 		/**
@@ -103,13 +74,7 @@ public class JobSchedule {
 			}
 		}/*
 		
-		/**
-		 * Get the list of incoming adjencency (ie, prerequisists)
-		 * @return
-		 */
-		protected ArrayList<Job> incoming(){
-			return incomingList;
-		}
+
 		
 		/**
 		 * Get the jobs in reverse topological order
@@ -127,15 +92,12 @@ public class JobSchedule {
 		}
 		
 		
-		protected boolean isFinished() {
-			return finished;
-		}
-		
 	}
 	
 	
 	public JobSchedule() {
 		list = new ArrayList<Job>();
+		rTopo = new ArrayList<Job>();
 	}
 	
 	/**
@@ -146,9 +108,8 @@ public class JobSchedule {
 			if (element.incomingList.isEmpty()) {
 				element.d = 0;
 			} else {
-				element.d = Integer.MAX_VALUE;
+				element.d = -1;
 			}
-			element.finished = false;
 			element.discovered = false;
 		}
 	}
@@ -159,6 +120,7 @@ public class JobSchedule {
 	 * @return the list of jobs in reverse topological order
 	 */
 	private ArrayList<Job> getReverseTopo() {
+		this.initializeDFS();
 		ArrayList<Job> rTopo = new ArrayList<Job>();
 		for(Job element : list) {
 			if(element.discovered == false) {
@@ -176,47 +138,40 @@ public class JobSchedule {
 	public Job addJob(int time) {
 		Job j = new Job(time, this);
 		list.add(j);
+		rTopo = this.getReverseTopo();
 		return j;
 	}
 	
-	/**
-	 * Get a reference to a job at a specific index
-	 * @param index job index
-	 * @return reference to a job
-	 */
-	public Job getJob(int index) {
-		return list.get(index);
-	}
-	
+
 	/**
 	 * Get the minimum possible completion time for the entire schedule
 	 * @return the minimum completion time, or -1 is the schedule is impossible.
 	 */
 	public int minCompletionTime() {
-		int maxStartingTime = 0;
-		Job lastJob = null;
+		int maxCompletionTime = 0;
 		
 		// Initialize the list for DFS
 		this.initializeDFS();
 		
 		// Get topological order of the list
 		ArrayList<Job> rTopo = this.getReverseTopo();
+		
 		// Run DAGSSS until the job status is true (finished == true)
-			for (Job u : rTopo) {
-				u.finished = true;
-				// Look at all the outgoing list to update them
-				for (Job v : u.outgoingList) {
-					if(u.d + u.time > v.d || v.d == Integer.MAX_VALUE) {
-						v.d = u.d + u.time;
-						v.parent = u;
-						if (v.d > maxStartingTime) {
-							maxStartingTime = v.d;
-							lastJob = v;
-						}
-					}
+		int i = 0;
+		Job u = null;
+		while (i < rTopo.size()) {
+			u = rTopo.get(i);
+			for (Job v : u.incomingList) {
+				if (v.d == -1) {
+					return -1;
 				}
+				u.d = Integer.max(u.d, v.d + v.time);
+				maxCompletionTime = Integer.max(maxCompletionTime,  u.d + u.time);
 			}
-		return maxStartingTime + lastJob.time;
+			i++;
+		}
+	
+		return maxCompletionTime;
 	}
 	
 

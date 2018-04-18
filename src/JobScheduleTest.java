@@ -25,7 +25,7 @@ public class JobScheduleTest {
 		// Create a cycle
 		job1.requires(job3);
 		assertEquals(0, job5.getStartTime());
-		//assertEquals(-1, job1.getStartTime());
+		assertEquals(-1, job1.getStartTime());
 
 	}
 	
@@ -44,6 +44,11 @@ public class JobScheduleTest {
 		JobSchedule.Job job5 = schedule.addJob(5);
 		job3.requires(job5);
 		assertEquals(8, schedule.minCompletionTime());
+		
+		// Create cycle
+		job1.requires(job3);
+		assertEquals(-1, job1.getStartTime());
+
 		
 	}
 
