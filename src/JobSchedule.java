@@ -48,19 +48,7 @@ public class JobSchedule {
 			// Initialize the list for DFS
 			schedule.initializeDFS();
 						
-			// Run DAGSSS until the job status is true (finished == true)
-			int i = 0;
-			Job u = null;
-			while (u != this && i < schedule.rTopo.size()) {
-				u = schedule.rTopo.get(i);
-				for (Job v : u.incomingList) {
-					if (v.d == -1) {
-						return -1;
-					}
-					u.d = Integer.max(u.d, v.d+v.time);
-				}
-				i++;
-			}
+
 			return this.d;
 			
 		}
@@ -116,7 +104,6 @@ public class JobSchedule {
 			} else {
 				element.d = -1;
 			}
-			element.discovered = false;
 		}
 	}
 	
@@ -158,19 +145,22 @@ public class JobSchedule {
 		// Initializes the in degree to 0
 		for(Job u : list) {
 			u.inDegree = 0;
-			u.d = 0;
 		}
 		// Get the actual inDegree for each job
 		for(Job u : list) {
 			for(Job v : u.outgoingList) {
 				v.inDegree++;				
 			}
+			
 		}
 		// Put all the Job with no requirement in the list
 		List<Job> topoList = new ArrayList<Job>();
 		for(Job u : list) {
 			if(u.inDegree == 0) {
+				u.d = 0;
 				topoList.add(u);
+			} else {
+				u.d = -1;
 			}
 		}
 		// Decrease in degree of all the jobs in the list
