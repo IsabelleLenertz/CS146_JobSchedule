@@ -44,8 +44,8 @@ public class JobSchedule {
 				for(Job v : u.outgoingList) {
 					v.inDegree++;				
 				}
-				
 			}
+			if (this.inDegree == 0) return 0;
 			// Put all the Job with no requirement in the list
 			List<Job> topoList = new ArrayList<Job>();
 			for(Job u : list) {
@@ -61,15 +61,14 @@ public class JobSchedule {
 			int i = 0;
 			while(i < topoList.size()) {
 				Job u = topoList.get(i);
+				if (u == this) return u.d;
 				for(Job v : u.outgoingList) {
 					v.inDegree--; 
-					v.d = Integer.max(v.d, u.d + u.time);
+					v.d = max(v.d, u.d + u.time);
 					if(v.inDegree == 0)
-						if(v == this) {
-							return v.d;
-						}
 						topoList.add(v);
 					}
+				i++;
 			}		
 			// if this was never reached
 			return -1;		
@@ -91,6 +90,10 @@ public class JobSchedule {
 		Job j = new Job(time);
 		list.add(j);
 		return j;
+	}
+	
+	public Job getJob(int index) {
+		return list.get(index);
 	}
 	
 
@@ -121,14 +124,14 @@ public class JobSchedule {
 				u.d = -1;
 			}
 		}
-		// Decrease in degree of all the jobs in the list
+		// Decrease in degree of all the jobs outgoing in the list
 		// Add the job that have now in degree 0
 		for (int i = 0; i < topoList.size(); i++) {
 			Job u = topoList.get(i);
+			maxCompletionTime = max(maxCompletionTime,  u.d + u.time);
 			for(Job v : u.outgoingList) {
 				v.inDegree--; 
-				v.d = Integer.max(v.d, u.d + u.time);
-				maxCompletionTime = Integer.max(maxCompletionTime,  v.d + v.time);
+				v.d = max(v.d, u.d + u.time);
 				if(v.inDegree == 0) {
 					topoList.add(v);
 				}
@@ -139,6 +142,13 @@ public class JobSchedule {
 			maxCompletionTime = -1;
 		}
 		return maxCompletionTime;
+	}
+	
+	private static int max(int a, int b) {
+		if (a>b)
+			return a;
+		else
+			return b;
 	}
 	
 
