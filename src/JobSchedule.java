@@ -1,4 +1,7 @@
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 public class JobSchedule {
 	private ArrayList<Job> list;
@@ -7,9 +10,12 @@ public class JobSchedule {
 	public class Job{
 		private int time;
 		private ArrayList<Job> incomingList;
+		private ArrayList<Job> outgoingList;
 		private int d;
 		private JobSchedule schedule;
 		private boolean discovered;	
+		private int inDegree;
+		private static final int START_NOT_SET = -1;
 
 		
 		/**
@@ -18,6 +24,7 @@ public class JobSchedule {
 		 */
 		protected Job(int t, JobSchedule thisSchedule) {
 			incomingList = new ArrayList<Job>();
+			outgoingList = new ArrayList<Job>();
 			time = t;
 			schedule = thisSchedule;
 		}
@@ -29,8 +36,7 @@ public class JobSchedule {
 		public void requires(Job j) {
 			// Add j to the incoming list of this
 			incomingList.add(j);
-			schedule.rTopo = schedule.getReverseTopo();
-			
+			j.outgoingList.add(this);
 		}
 		
 		/**
@@ -149,28 +155,41 @@ public class JobSchedule {
 	 */
 	public int minCompletionTime() {
 		int maxCompletionTime = 0;
-		
-		// Initialize the list for DFS
-		this.initializeDFS();
-		
-		// Get topological order of the list
-		ArrayList<Job> rTopo = this.getReverseTopo();
-		
-		// Run DAGSSS until the job status is true (finished == true)
-		int i = 0;
-		Job u = null;
-		while (i < rTopo.size()) {
-			u = rTopo.get(i);
-			for (Job v : u.incomingList) {
-				if (v.d == -1) {
-					return -1;
-				}
-				u.d = Integer.max(u.d, v.d + v.time);
-				maxCompletionTime = Integer.max(maxCompletionTime,  u.d + u.time);
-			}
-			i++;
+		// Initializes the in degree to 0
+		for(Job u : list) {
+			u.inDegree = 0;
+			u.d = 0;
 		}
-	
+		// Get the actual inDegree for each job
+		for(Job u : list) {
+			for(Job v : u.outgoingList) {
+				v.inDegree++;				
+			}
+		}
+		// Put all the Job with no requirement in the list
+		List<Job> topoList = new ArrayList<Job>();
+		for(Job u : list) {
+			if(u.inDegree == 0) {
+				topoList.add(u);
+			}
+		}
+		// Decrease in degree of all the jobs in the list
+		// Add the job that have now in degree 0
+		for (int i = 0; i < topoList.size(); i++) {
+			Job u = topoList.get(i);
+			for(Job v : u.outgoingList) {
+				v.inDegree--; 
+				v.d = Integer.max(v.d, u.d + u.time);
+				maxCompletionTime = Integer.max(maxCompletionTime,  v.d + v.time);
+				if(v.inDegree == 0) {
+					topoList.add(v);
+				}
+			}
+		}
+		
+		if (topoList.size() < list.size()) {
+			maxCompletionTime = -1;
+		}
 		return maxCompletionTime;
 	}
 	
