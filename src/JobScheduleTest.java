@@ -82,4 +82,140 @@ public class JobScheduleTest {
 		assertEquals(0, schedule.getJob(2).getStartTime()); //should return 0 (no loops in prerequisites)
 	}
 
+	@Test
+	public void extendedTest() {
+		JobSchedule schedule = new JobSchedule();
+		
+		JobSchedule.Job j0 = schedule.addJob(1);
+		JobSchedule.Job j1 = schedule.addJob(5);
+		JobSchedule.Job j2 = schedule.addJob(3);
+		JobSchedule.Job j3 = schedule.addJob(4);
+		JobSchedule.Job j4 = schedule.addJob(8);
+		JobSchedule.Job j5 = schedule.addJob(9);
+		JobSchedule.Job j6 = schedule.addJob(5);
+		
+		// Without circles
+		j0.requires(j1);
+		assertEquals(5, j0.getStartTime());
+		assertEquals(0, j1.getStartTime());
+		assertEquals(0, j2.getStartTime());
+		assertEquals(0, j3.getStartTime());
+		assertEquals(0, j4.getStartTime());
+		assertEquals(0, j5.getStartTime());
+		assertEquals(0, j6.getStartTime());
+		assertEquals(9, schedule.minCompletionTime());
+
+		j2.requires(j1);
+		assertEquals(5, j0.getStartTime());
+		assertEquals(0, j1.getStartTime());
+		assertEquals(5, j2.getStartTime());
+		assertEquals(0, j3.getStartTime());
+		assertEquals(0, j4.getStartTime());
+		assertEquals(0, j5.getStartTime());
+		assertEquals(0, j6.getStartTime());
+		assertEquals(9, schedule.minCompletionTime());
+
+		j2.requires(j4);
+		assertEquals(5, j0.getStartTime());
+		assertEquals(0, j1.getStartTime());
+		assertEquals(8, j2.getStartTime());
+		assertEquals(0, j3.getStartTime());
+		assertEquals(0, j4.getStartTime());
+		assertEquals(0, j5.getStartTime());
+		assertEquals(0, j6.getStartTime());
+		assertEquals(11, schedule.minCompletionTime());
+
+		
+		j3.requires(j1);
+		assertEquals(5, j0.getStartTime());
+		assertEquals(0, j1.getStartTime());
+		assertEquals(8, j2.getStartTime());
+		assertEquals(5, j3.getStartTime());
+		assertEquals(0, j4.getStartTime());
+		assertEquals(0, j5.getStartTime());
+		assertEquals(0, j6.getStartTime());
+		assertEquals(11, schedule.minCompletionTime());
+
+		j3.requires(j5);
+		assertEquals(5, j0.getStartTime());
+		assertEquals(0, j1.getStartTime());
+		assertEquals(8, j2.getStartTime());
+		assertEquals(9, j3.getStartTime());
+		assertEquals(0, j4.getStartTime());
+		assertEquals(0, j5.getStartTime());
+		assertEquals(0, j6.getStartTime());
+		assertEquals(13, schedule.minCompletionTime());
+
+		j3.requires(j0);
+		assertEquals(5, j0.getStartTime());
+		assertEquals(0, j1.getStartTime());
+		assertEquals(8, j2.getStartTime());
+		assertEquals(9, j3.getStartTime());
+		assertEquals(0, j4.getStartTime());
+		assertEquals(0, j5.getStartTime());
+		assertEquals(0, j6.getStartTime());
+		assertEquals(13, schedule.minCompletionTime());
+
+		j5.requires(j4);
+		assertEquals(5, j0.getStartTime());
+		assertEquals(0, j1.getStartTime());
+		assertEquals(8, j2.getStartTime());
+		assertEquals(17, j3.getStartTime());
+		assertEquals(0, j4.getStartTime());
+		assertEquals(8, j5.getStartTime());
+		assertEquals(0, j6.getStartTime());
+		assertEquals(21, schedule.minCompletionTime());
+
+		j6.requires(j5);
+		assertEquals(5, j0.getStartTime());
+		assertEquals(0, j1.getStartTime());
+		assertEquals(8, j2.getStartTime());
+		assertEquals(17, j3.getStartTime());
+		assertEquals(0, j4.getStartTime());
+		assertEquals(8, j5.getStartTime());
+		assertEquals(17, j6.getStartTime());
+		assertEquals(22, schedule.minCompletionTime());
+		
+		j5.requires(j2);
+		assertEquals(5, j0.getStartTime());
+		assertEquals(0, j1.getStartTime());
+		assertEquals(8, j2.getStartTime());
+		assertEquals(20, j3.getStartTime());
+		assertEquals(0, j4.getStartTime());
+		assertEquals(11, j5.getStartTime());
+		assertEquals(20, j6.getStartTime());
+		assertEquals(25, schedule.minCompletionTime());
+		
+		j3.requires(j6);
+		assertEquals(5, j0.getStartTime());
+		assertEquals(0, j1.getStartTime());
+		assertEquals(8, j2.getStartTime());
+		assertEquals(25, j3.getStartTime());
+		assertEquals(0, j4.getStartTime());
+		assertEquals(11, j5.getStartTime());
+		assertEquals(20, j6.getStartTime());
+		assertEquals(29, schedule.minCompletionTime());
+
+		// Adding circles
+		j5.requires(j3);
+		assertEquals(5, j0.getStartTime());
+		assertEquals(0, j1.getStartTime());
+		assertEquals(8, j2.getStartTime());
+		assertEquals(-1, j3.getStartTime());
+		assertEquals(0, j4.getStartTime());
+		assertEquals(-1, j5.getStartTime());
+		assertEquals(-1, j6.getStartTime());
+		assertEquals(-1, schedule.minCompletionTime());
+		
+		j1.requires(j5);
+		assertEquals(-1, j0.getStartTime());
+		assertEquals(-1, j1.getStartTime());
+		assertEquals(-1, j2.getStartTime());
+		assertEquals(-1, j3.getStartTime());
+		assertEquals(0, j4.getStartTime());
+		assertEquals(-1, j5.getStartTime());
+		assertEquals(-1, j6.getStartTime());
+		assertEquals(-1, schedule.minCompletionTime());
+		
+	}
 }
